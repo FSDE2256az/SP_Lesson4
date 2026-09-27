@@ -151,7 +151,82 @@ public class Program
 
         // Cancelation Token
 
+        void MoneyTransfer(CancellationToken ct)
+        {
+            Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
 
+            for (int i = 0; i < 10; i++)
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    Console.WriteLine("Canceled...");
+                    return;
+                }
+
+                Console.WriteLine("Take Money....");
+                Thread.Sleep(100);
+
+                Console.WriteLine("Send Money...");
+            }
+        }
+
+
+        void MoneyTransferWithCatch(CancellationToken ct)
+        {
+            Console.WriteLine(Thread.CurrentThread.ManagedThreadId);
+
+            try
+            {
+                for (int i = 0; i < 10; i++)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    Console.WriteLine("Take Money....");
+                    Thread.Sleep(100);
+
+                    Console.WriteLine("Send Money...");
+                }
+            }
+            catch (OperationCanceledException oex)
+            {
+                Console.WriteLine($"Exception occured: {oex.Message}");
+            }
+        }
+
+
+        using var cts = new CancellationTokenSource();
+
+        //  ThreadPool.QueueUserWorkItem(_ =>
+        //  {
+        //      var thread = new Thread(() =>
+        //      {
+        //          MoneyTransfer(cts.Token);
+        //      });
+        // 
+        //      thread.Start();
+        // 
+        //      Thread.Sleep(500);
+        // 
+        //      cts.Cancel();
+        //  });
+
+       //  Console.ReadKey();
+
+        ThreadPool.QueueUserWorkItem(_ =>
+        {
+            var thread = new Thread(() =>
+            {
+                MoneyTransferWithCatch(cts.Token);
+            });
+
+            thread.Start();
+
+            Thread.Sleep(500);
+
+            cts.Cancel();
+        });
+
+        Console.ReadKey();
 
         // ///////////////////////////////////////
 
